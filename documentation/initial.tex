@@ -1,0 +1,215 @@
+\documentclass{article}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[nosingleletter, lastparline]{impnattypo}
+\usepackage{babel}
+\usepackage{bookmark}
+\usepackage[babel, tracking]{microtype}
+\usepackage{booktabs}
+\usepackage[margin=1in]{geometry}
+\usepackage{framed}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{parskip}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+
+
+\linespread{1.3}
+\setlength{\parindent}{0pt}
+
+\graphicspath{{diagrams/}}
+
+\usepackage{subfiles} 
+
+\title{Wykrywanie nierozłącznych społeczności w profesjonalnych ligach piłkarskich \\ Dokumentacja wstępna}
+\author{Jakub Jasiński \\ Mikołaj Kornaś \\ Konrad Kowalak}
+
+\date{24 Marzec 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Wstęp}
+\subsection{Wstęp teoretyczny}
+Badanie społeczności jest bardzo częstym przedmiotem badań współczesnej informatyki i analizy danych. Od kiedy możliwy jest dostęp do ogromnych zbiorów danych powstają coraz to nowsze metody i algorytmy służące do analizy tych danych i wyciągania coraz to ciekawszych wniosków.
+
+Grafem społecznościowym nazywamy taki graf, który ilustruje powiązania między ludźmi, grupami i organizacjami w sieci społecznościowej. Termin ten jest również używany do opisania sieci społecznościowej danej osoby. Każdy wierzchołek reprezentuje rekord danych, a krawędź relację między nimi. W przypadku społeczności najczęstszym oraz najbardziej instynktownym dopasowaniem jest wierzchołek-osoba, a krawędź pomiędzy dwoma wierzchołkami istnieje jeśli te dwie osoby się znają. Relacja taka jest symetryczna tzn. jeśli osoba A zna osobę B to osoba B zna osobę A, nie zakładamy, że może to zachodzić w jedną stronę.
+
+Czym jest społeczność? Nie istnieje jedna dokładna definicja. Patrząc w rzeczywistości relacji międzyludzkich można określić jako grupa ludzi, która jest stosunkowo bardziej związana ze sobą niż z innymi. W przypadku grafów idea wykrywania społeczności opiera się na znajdowaniu grup
+wierzchołków, dla których liczba połączeń w obrębie społeczności jest znacząco
+wyższa, niż liczba połączeń do wierzchołków spoza tej społeczności.
+
+Naszym zadaniem będzie wyszukiwanie w grafach społeczności, które są nierozłączne tzn. każdy wierzchołek może należeć do wielu społeczności.
+\section{Opis zakresu badań}
+
+Z powodu naszego zainteresowania piłką nożną jak i grafami postanowiliśmy połączyć te dwa tematy, żeby sprawdzić jak transfery w świecie piłki nożnej wpływają na połączenia i społeczności tworzone między piłkarzami.
+\subsection{Społeczność piłkarska}
+Na naszą docelową społeczność wyznaczyliśmy sobie profesjonalnych piłkarzy występujących w danej lidze/ligach piłkarskich. Dwóch piłkarzy jest ze sobą w relacji jeśli rozegrali ze sobą przynajmniej jeden mecz w barwach jednej drużyny.
+Od razu nasuwa się pytanie, czy jest sens rozpatrywania jakiś społeczności oprócz oczywistych wynikających z przynależności do jednej drużyny. Według nas jest. Istotą istnienia różnych społeczności i powiązań pomiędzy piłkarzami są transfery pomiędzy drużynami. Gracze podczas okienek transferowych zmieniają kluby co oznacza że nawiązują nowe relacje z nowymi zawodnikami. Dla przykładu podczas ostatniego sezonu 21/22 polskiej Ekstraklasy liczącej 574 piłkarzy, aż 395 
+
+\subsection{Dane do badań}
+Dane do zbadania będziemy pobierać z dwóch stron iternetowych posiadających kompletną bazę na temat wszystkich piłkarzy i meczów piłkarskich: \\
+1) www.transfermarkt.de\\
+2) www.fbref.com
+
+Dodatkowo chcielibyśmy spróbować sami wygenerować specjalny graf losowy symulujący sytuację w takiej lidze. Konstrukcja takiego grafu zależy od wygląda następująco:
+\begin{enumerate}
+    \item Tworzymy $ n \in [16,20]$ bardzo gęstych grafów (prawie klik) o $k = 30$ wierzchołkach. Będą one symbolizować drużyny piłkarskie.
+    \item W każdym z takich grafów na start wierzchołkom przypisujemy etykietę $A_i \quad i = 1,2,3...,n $  zależną od przynależności do danej drużyny.
+    \item Wykonujemy $m$ iteracji, każda z nich będzie symbolizować slot transferowy. W każdej z nich wśród wierzchołków o tej samej etykiecie losujemy 5 i losowo dobieramy im nową etykietę oraz dodajemy krawędź do wszystkich wierzchołków mającą tą nową wylosowaną etykietę.
+\end{enumerate}
+\textbf{Uwaga} Może zdarzyć się tak, że jeden klub zacznie się znacząco zmniejszać. Można założyć, że minimalna ilość wierzchołków z daną etykietą wynosi $k_{min} = 20$ i nie dopuszczac zmiany na tą etykietą, a dodatkowo wymuszać, żeby wierzchołki dochodziły do tego klubu.
+
+\section{Opis algorytmów}
+
+\subsection{Algorytm Girvana-Newmana}
+Algorytm Girvana-Newmana jest jednym z najbardziej znanych algorytmów to wykrywania społeczności ze względu na swoją prostotę. Algorytm jest iteracyjny. Po każdej iteracji następuje coraz większy podział na społeczności.
+Kroki pojedynczej iteracji:
+\begin{enumerate}
+    \item Wyznaczamy najkrótsze ścieżki między każdą parą wierzchołków w grafie.
+    \item Z każdej ścieżki zwiększmy licznik (ustawiony początkowo na 0) każdej krawędzi, która na niej się znajduje. Licznik symbolizuje ilość najkrótszych ścieżek na których leży ta krawędź.
+    \item Krawędź z największą wartością licznika wyrzucamy z grafu.
+\end{enumerate}
+Iterację powtarzamy aż do usunięcia wszystkich krawędzi.
+Wynik można odzyskać poprzez cofanie procesu.
+
+\paragraph{Zalety:}
+Bardzo prosty koncepcyjnie, a także w implementacji.
+\paragraph{Wady:}
+\begin{enumerate}
+    \item Bardzo wolny
+    \item Aby odzyskać wynik trzeba skorzystać z dodatkowej metryki opisującej miarę zwartości spójnej składowej.
+\end{enumerate}
+
+
+
+\subsubsection{Modyfikacje dla społeczności nachodzących - CONGA}
+
+W klasycznym wydaniu algorytmu po usunięciu krawędzi może zdarzyć się tak, że wierzchołek w końcu jest wierzchołkiem stopnia jeden i należy tylko do jednej społeczności. Chcąc przenieść ten algorytm na społeczności nachodzące potrzebujemy dodatkowego parametru dla wierzchołka, który symbolizuje ilość najkrótszych ścieżek na których leży ten wierzchołek.
+\\
+Aby umożliwić wykrywanie społeczności nakładających się, musimy odnaleźć moment w którym dojdzie do podziału wierzchołka,
+tak aby znalazł się on w dwóch oddzielnych społecznościach. Momentem podziału
+wierzchołka zamiast usunięcia krawędzi
+następuje wtedy, gdy największa wartość parametru wierzchołkowego przekroczy największą wartość parametru krawędziowego.
+
+\subsection{Label Propagation Algorithm}
+Również dość prosty, a przy tym bardzo szybki algorytm. Opiera się na prostej obserwacji, że informacja rozprowadzana wśród ludzi/wierzchołków
+\begin{enumerate}
+    \item Inicjujemy każdy wierzchołek jego własną społecznością (identyfikatorem)
+    \item W iteracjach propagujemy każdą ze społeczności w sieci. W pojedynczej iteracji:
+    \begin{itemize}
+        \item Dla każdego wierzchołka:
+        \begin{enumerate}
+            \item Sprawdzamy, która społeczność dominuje wśród jego sąsiadów
+            \item Przypisujemy go do znalezionej społeczności. 
+        \end{enumerate}
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Modyfikacje dla społeczności nachodzących - CORPA}
+Modyfikacja polega na przypisaniu n najbardziej popularnych sąsiadów. Wtedy wierzchołki są w kilku społecznościach naraz, przy czym jedna jest wyróżniona.
+
+\paragraph{Zalety:}
+\begin{enumerate}
+    \item Szybki, twórcy piszą, że po 4-5 iteracjach algorytm zaczyna znacznie zbiegać do celu. Złożoność obliczeniowa bliska liniowej.
+    \item Również prosty koncepcyjnie jak i w implementacji.
+    \item Nie trzeba wyznaczać reprezentantów społeczności na początku
+\end{enumerate}
+\paragraph{Wady:} 
+\begin{enumerate}
+    \item Problemy z określeniem liczby docelowych społeczności.
+    \item Różne wyniki dla różnych założeń początkowych.
+\end{enumerate}
+
+\section{Propozycja naszego algorytmu}
+\begin{enumerate}
+    \item Dopóki są wierzchołki w grafie powtarzamy:
+    \begin{enumerate}
+        \item Nową społeczność inicjujemy jednym wierzchołkiem.
+        \item W pozostałych wierzchołkach grafu sprawdzamy, który z nich jest ''blisko związany'' z tworzoną społecznością. Jeśli odpowiednio dobrze to dodajemy go do społeczności.
+        \item Krok drugi powtarzamy, aż żaden wierzchołek nie będzie spełniał warunku.
+        \item Utworzoną społeczność odłączamy od grafu
+    \end{enumerate}
+\end{enumerate}
+
+Tak jak można zauważyć najbardziej problematycznym elementem jest określenie jak blisko związany jest rozpatrywany wierzchołek z aktualnie tworzoną społecznością. Problem ten nie jest trywialny. Wyróżniliśmy 2 przypadki:\\
+\textbf{2.} Sytuacja, gdy w społeczności jest już dużo wierzchołków (raczej ponad połowa docelowej społeczności). Wówczas dodanie nowego wierzchołka jest dość oczywiste. W brakujących wierzchołkach większość sąsiadów będzie należeć do tworzonej społeczności. \\
+\textbf{1.} Sytuacja na samym początku gdy będzie 1-5 wierzchołków w społeczności i trzeba będzie wciskać nowe ''na siłę''. \\
+
+Rozwiązaniem więc będzie prawdopodobnie funkcja $$near(n, m, deg, communitySize, communityNeighbours, expectedSize)$$ gdzie:
+\begin{itemize}
+    \item $n, m$ - liczba wierzchołków i krawędzi
+    \item $deg$ - stopień wierzchołka
+    \item $communitySize$ - liczba już dołączonych wierzchołków do społeczności
+    \item $communityNeighbours$ - liczba dołączonych wierzchołków wśród sąsiadów
+\end{itemize}
+Prawdopodobnie przydane będą również parametry takie jak: $expectedSize$ - oczekiwana/przypuszczana wielkość szukanej społeczności. \\
+
+\subsection{Trudności}
+Punkt pierwszy prawdopodobnie będzie generował problemy. W pierwszej fazie podczas siłowego dodawania wierzchołków może się okazać, że dodamy wierzchołki z kilku różnych społeczności. Rozwiązania są dwa:
+\begin{enumerate}
+    \item Po wyznaczeniu społeczności warto ją jeszcze raz przejrzeć, czy przypadkiem nie składa się z kilku mniejszych.
+    \item Inicjować społeczność można wierzchołkiem z jak najmniejszym stopniem. Zmniejszy to szansę na to, że będzie należał do kilku społeczności naraz.
+\end{enumerate}
+
+\subsection{Modyfikacja dla społeczności nachodzących}
+Jest dosyć prosta. Przed odcięciem społeczności od grafu przeglądamy każdy wierzchołek wchodzący w jej skład. Jeśli ma dużo (czyli ile, jeszcze nie wiemy) sąsiadów spoza społeczności. Jeśli tak to go klonujemy. Jedna część idzie ze społecznością, druga zostaje w grafie.
+
+\paragraph{Zalety}
+\begin{enumerate}
+    \item Szybki, złożoność obliczeniowa jest bliska liniowo-logarytmicznej: $O(m\cdot log(n))$.
+    \item W przeciwieństwie do wszystkich innych algorytmów tworzenie społeczności rozpoczynane jest lokalnie. Nie trzeba mieć informacji o całym grafie, a jedynie o lokalnie rozpatrywanej społeczności. Może to być kluczowe w przypadkach gdy np. nie da się wczytać całego grafu do pamięci, a jednocześnie daje pewne pole do zrównoleglenia obliczeń.
+\end{enumerate}
+\paragraph{Wady:}
+\begin{enumerate}
+    \item Funkcja ''bliskości'' nie jest jeszcze dokładnie wyznaczona, choć mamy pewne intuicje. Prawdopodobnie nie będzie uniwersalna i trzeba ją będzie dostosować do konkretnego grafu, aby algorytm miał szansę działać.
+    \item Wykrywanie społeczności, które bardzo gęsto na siebie nachodzą będzie problematyczne.
+\end{enumerate}
+
+\paragraph{Testowanie:} Graf złożony z piłkarzy będzie jednocześnie łatwy i trudny dla naszego algorytmu. Trudny ze względu na przynależność zdecydowanej większości graczy od kilku zespołów. Wybranie początkowego gracza będzie trudne ze względu na problem opisany akapit wcześniej. Będzie również łatwe ze względu na charakterystykę samego grafu. W standardowym modelu (połączeni są wszyscy piłkarze, którzy w pewnym sezonie grali w jednej drużynie) składa się on z wielu prawie-klik połączonych pojedynczymi wierzchołkami. Będzie dużo punktów artykulacji (w kontekście połączenia ze sobą dwóch społeczności, a nie całego grafu), które będą dosyć łatwo wychwytywane przez nasz algorytm.
+
+
+\subsection{Ocena wyników}
+Po tym co zwrócą nam nasze algorytmy będziemy chcieli porównać wyniki. Będziemy chcieli porównać czas działania każdego z nich oraz społeczności i ich jakość zwrócone przez te algorytmy.
+
+\subsubsection{Czas działania}
+Aby uzyskać miarodajne rezultaty, planujemy każdy algorytm uruchamiać na
+tych samych zbiorach danych oraz tej samej maszynie. Oczekujemy, że zaproponowany przez nas algorytm będzie działał w czasie niewiele wolniejszym od algorytmu LPA.
+
+\subsubsection{Jakość społeczności}
+W tym wypadku skupimy się na analizie wizualizacji rozwiązania. Sprawdzimy, jakie powstały społeczności, jak pokrywają się one z obecnym klubem zawodnika oraz jakie zależności można miedzy nimi wskazać. Zamierzamy również badać, czy społeczności nie są zbite w jedną dużą społeczność, z której nic nie wynika.
+
+\subsubsection{Omega index}
+Porównanie jakości wyznaczonych społeczności między algorytmami będziemy dokonywać przez użycie wskaźnika Omega Index. Uwzględnia on liczbę klastrów, w których dowolna para wierzchołków jest razem. Obserwowana zgodność między rozwiązaniami wyraża się wzorem: $$Obs(s1,s2) = \sum_{j=0}^{min(J,K)} \frac{A_j}{N} $$, gdzie $s1, s2$ to wyznaczone społeczności przez dwa algorytmy, $J$ i $K$ to maksymalna liczba społeczności, w których dowolna para wierzchołków występuje razem odpowiednio w $s1$ i $s2$, $a_j$ to liczba par wierzchołków występująca razem w dokładnie $j$ społecznościach. Następnie wyznaczamy $$Exp(s1,s2)=\sum_{j=0}^{min(J,K)}\frac{N_{j_1} N_{j_2}}{N^2}$$
+Ostateczny wynik to 
+$$Omega(s1,s2)=\frac{Obs(s1,s2)-Exp(s1,s2)}{1-Exp(s1,s2)}$$
+
+\section{Bibliografia}
+\begin{enumerate}
+
+\item Yang, Jaewon, and Jure Leskovec. ``Overlapping community detection at scale: a nonnegative matrix factorization approach.'' Proceedings of the sixth ACM international conference on Web search and data mining. 2013
+
+\item Vinícius da Fonseca Vieira, Carolina Ribeiro Xavier and Alexandre Gonçalves Evsukof ``A comparative study of overlapping community detection methods from the perspective of the structural properties''
+
+\item M. Girvan and M. E. J. Newman ``Community structure in social and biological networks''
+
+\item Usha Nandini Raghavan, Reka Albert and Soundar Kumara ``Near linear time algorithm to detect community structures in large-scale networks''
+
+\item Gabriel Murray, Giuseppe Carenini, Raymond Ng ``Using the Omega Index for Evaluating Abstractive Community Detection''
+
+\item Ireneusz Stanicki, Mateusz Śliwakowski, Bartłomiej Truszkowski, Przemysław Woźniakowski ``Grafy i sieci - wykrywanie społeczności''
+
+\item www.gwiazdybasketu.pl/matematyka-w-koszykowce-co-laczy-chrisa-paula-i-tima-duncana/
+
+\item www.transfermarkt.de
+
+\item www.fbref.com
+
+\end{enumerate}
+\end{document}
