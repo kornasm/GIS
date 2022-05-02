@@ -40,7 +40,7 @@ else:
     leagueName = splittedUrl[7]
     leagueName = leagueName.split('-')
     leagueName = leagueName[0]
-    filename = leagueName + 'Edges'
+    filename = leagueName + 'Edges.csv'
 
 if exists(filename) == False:
     with open(filename , 'w') as csvfile:
