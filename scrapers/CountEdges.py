@@ -2,12 +2,8 @@
 # reult saved to a new file
 
 from typing import Counter
-from lxml import html
-import lxml, lxml.html
-import requests
 import csv
 from os.path import exists
-import time
 import sys
 
 def delete_comments(csvfile):

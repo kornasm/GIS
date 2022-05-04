@@ -1,16 +1,31 @@
 # script listing all players in fbref.com and saving it to file
 
 from lxml import html
-import lxml, lxml.html
 import requests
 import csv
 import time
+
+# function printing additional info about request
+def my_http_get(url):
+    print('')
+    print('REQUEST  ' + url)
+    time.sleep(7) # added to avoid being blocked by fbref server
+    start = time.time()
+    result = requests.get(url)
+    elapsed = time.time() - start
+    print('request time  ' + str(elapsed))
+    print('status code   ' + str(result.status_code))
+
+    if(result.status_code != 200):
+        print('last request failed')
+        quit()
+    return result
 
 baseurl = 'https://fbref.com/en/players/'
 
 a = 97
 z = 123
-filename = 'players'
+filename = 'Players.csv'
 
 with open(filename , 'w') as csvfile:
     csvwriter = csv.writer(csvfile)
@@ -21,13 +36,9 @@ for firstletter in range(a, z):
     for secondletter in range(a, z):
         char2 = chr(secondletter)
         print(char1 + char2)
-        time.sleep(10) # added to avoid being blocked by fbref server
         url = baseurl + char1 + char2 + '/'
-
-        page = requests.get(url)
-
+        page = my_http_get(url)
         tree = html.fromstring(page.content)
-        print('status code  ' + str(page.status_code))
 
         playerids = tree.xpath('/html/body/div[@id="wrap"]/div[@id="content"]/div[@class="section_wrapper"]/div[@class="section_content"]/p/a//@href') # id
         playernames = tree.xpath('/html/body/div[@id="wrap"]/div[@id="content"]/div[@class="section_wrapper"]/div[@class="section_content"]/p/a//text()') # name

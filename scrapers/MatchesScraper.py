@@ -1,9 +1,5 @@
-# script listing all players in fbref.com and saving it to file
-
 from lxml import html
-import lxml, lxml.html
 import requests
-from collections import Counter
 import csv
 from os.path import exists
 import time
@@ -26,26 +22,23 @@ def my_http_get(url):
     return result
 
 baseurl = 'https://fbref.com'
-localurl = 'http://0.0.0.0:8000'
 currenturl = ''
 filename = ''
 
 if len(sys.argv) <= 1:
-    print('Run this script with link to current season matches list of a league you want to scrape')
+    print('python3 matchesScraper.py [link to current season matches list of a scraped league]')
     print('e.g. python3 matchesScraper.py https://fbref.com/en/comps/36/schedule/Ekstraklasa-Scores-and-Fixtures')
     quit()
 else:
     currenturl = sys.argv[1]
     splittedUrl = sys.argv[1].split('/')
-    leagueName = splittedUrl[7]
-    leagueName = leagueName.split('-')
-    leagueName = leagueName[0]
+    leagueName = splittedUrl[-1]
     filename = leagueName + 'Edges.csv'
 
 if exists(filename) == False:
     with open(filename , 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(['id1', 'id2']) 
+        csvwriter.writerow(['#id1', 'id2']) 
 
 prevseasonexist = True
 

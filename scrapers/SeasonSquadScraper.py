@@ -1,5 +1,4 @@
 from lxml import html
-import lxml, lxml.html
 import requests
 import csv
 from os.path import exists
@@ -23,14 +22,13 @@ def my_http_get(url):
     return result
 
 baseurl = 'https://fbref.com'
-localurl = 'http://0.0.0.0:8000'
 currenturl = ''
 filename = ''
 minimum_matches = 0
 
 if len(sys.argv) <= 1:
-    print('Run this script with link to current season league table of a league you want to scrape')
-    print('e.g. python3 matchesScraper.py https://fbref.com/en/comps/36/Ekstraklasa-Stats')
+    print('usage python3 SeasonSquadScraper.py [link to league table of a scraped league] [minimum number of matches a player need to play to be counted (default 0)]')
+    print('e.g. python3 SeasonSquadScraper.py https://fbref.com/en/comps/36/Ekstraklasa-Stats 5')
     quit()
 else:
     currenturl = sys.argv[1]
@@ -51,10 +49,7 @@ while prevseasonexist == True:
     page = my_http_get(currenturl)
     tree = html.fromstring(page.content)
 
-    #teams = tree.xpath('/html/body/div[@id="wrap"]/div[@id="content"]/div/div//table/tbody/tr/td[@data-stat="match_report"]/a/@href')
     teams = tree.xpath('/html/body/div[@id="wrap"]/div[@id="content"]/div/div/div/table/tbody/tr/td[@class="left "]/a/@href')
-    #mat = [item for item in matches if 'matches' in item] # delete records with matches that has not yet taken place
-    print(*teams, sep="\n")
     print('no teams  ' + str(len(teams)))
 
     for team in teams:
@@ -88,7 +83,7 @@ while prevseasonexist == True:
               # if an internal server error occured it will be easy to figure out where to continue
 
     # get link to previous season
-    prevseason = tree.xpath('/html/body/div[@id="wrap"]/div[@id="info"]/div[@id="meta"]/div/div[@class="prevnext"]/a[@class="button2 prev"]/@href')
+    prevseason = tree.xpath('/html/body/div[@id="wrap"]/div/div[@id="meta"]/div/div[@class="prevnext"]/a[@class="button2 prev"]/@href')
 
     if len(prevseason) == 0:
         prevseasonexist = False
