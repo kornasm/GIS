@@ -41,7 +41,7 @@ else:
 if exists(filename) == False:
     with open(filename , 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(['id1', 'id2'])
+        csvwriter.writerow(['#id1', 'id2'])
 
 prevseasonexist = True
 
@@ -50,6 +50,7 @@ while prevseasonexist == True:
     tree = html.fromstring(page.content)
 
     teams = tree.xpath('/html/body/div[@id="wrap"]/div[@id="content"]/div/div/div/table/tbody/tr/td[@class="left "]/a/@href')
+    teams = teams[:len(teams)//2]
     print('no teams  ' + str(len(teams)))
 
     for team in teams:
@@ -75,7 +76,8 @@ while prevseasonexist == True:
 
     # log info to file about scraped season
     with open('seasonSquadsParsed', 'a') as file:
-        file.write(currenturl)
+        file.write(currenturl + '\n')
+        file.close()
 
     if len(teams) == 0:
         break # fbref haven't uploaded all the data yet.
