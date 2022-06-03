@@ -14,21 +14,8 @@ except ImportError:
     print('No Import')
 
 inverse_indicies = None
-playersFilename = "../../data/Players.csv"
-edgesFilename = "../../data/Counted2019-2020-Ekstraklasa-StatsEdges.csv"
-#edgesFilename = "../../data/EktraklasaEdges.csv"
-#playersFilename = "../../data/samplePlayers"
-#edgesFilename = "../../data/sampleEdges"
-edgesFilename = "../lpa/genedges"
-
-
-
 
 class Nasz_algorytm:
-
-    #def create_dictionary(vertices):
-    #    dictionary = dict(zip(vertices, range(len(vertices))))
-    #    return dictionary
 
     @staticmethod
     def vertex_should_join(g, vertex_idx, community_size):
@@ -85,10 +72,8 @@ class Nasz_algorytm:
             #print('     not deleting')
             return False
 
-        #for neigh in neighbors:
-
     @staticmethod
-    def add_vertex_to_community(graph, comm_num, vertex_idx, communities_by_v, communities_by_c, community_size, queue):
+    def add_vertex_to_community(g, comm_num, vertex_idx, communities_by_v, communities_by_c, community_size, queue):
         #print('ADD   ' + str(vertex_idx))
         if g.vs[vertex_idx]["last_community_added"] >= comm_num:
             return
@@ -182,7 +167,7 @@ class Nasz_algorytm:
             #visual_style["vertex_size"] = g.vs["vertex_size"]
             #plot(g, **visual_style)
             #print(' vertices left in graph   ' + str(vertices_left_in_graph))
-
+'''
 g = read_graph(edgesFilename)
 gg = g.copy()
 
@@ -244,3 +229,4 @@ print('no_vertices   ' + str(len(gg.vs)) + '    edges   ' + str(len(gg.es)))
 if len(g.vs) > 150:
     visual_style["bbox"] = (4000, 4000)
 plot(gg, **visual_style)
+'''
