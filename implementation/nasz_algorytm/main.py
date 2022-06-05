@@ -4,16 +4,11 @@ import csv
 import random
 from queue import Queue
 import time
-
-import sys
-sys.path.insert(0, "../")
-
-try:
-    from graph_functions import *
-except ImportError:
-    print('No Import')
+from graph_functions import *
 
 inverse_indicies = None
+
+edgesFilename = '../../data/Counted'
 
 class Nasz_algorytm:
 
@@ -64,7 +59,7 @@ class Nasz_algorytm:
 
         ratio = float(outside_neighbors) / (community_neighbors + outside_neighbors)
         #print('         ratio   ' + str(ratio) + '     ' + str(avg))
-        if ratio <= avg:
+        if ratio <= avg or ratio <= 0.5 :
             g.vs[vertex_idx]["to_delete"] = 1
             #print('     to delete')
             return True
