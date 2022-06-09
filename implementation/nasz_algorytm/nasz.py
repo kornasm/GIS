@@ -1,15 +1,12 @@
 from time import sleep
 from igraph import *
-import csv
-import random
 from queue import Queue
-import time
 
 import sys
 sys.path.append('../')
 from graph_functions import *
 
-inverse_indicies = None
+#inverse_indicies = None
 
 edgesFilename = '../../data/sampleEdges'
 
@@ -178,7 +175,5 @@ class Nasz_algorytm:
                     Nasz_algorytm.delete_vertex_from_graph(g, member)
                     vertices_left_in_graph -= 1
             
-            #visual_style["vertex_size"] = g.vs["vertex_size"]
-            #plot(g, **visual_style)
-            #print(' vertices left in graph   ' + str(vertices_left_in_graph))
+        communities_by_c.pop(0)
         return communities_by_c
