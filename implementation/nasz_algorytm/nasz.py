@@ -4,13 +4,28 @@ import csv
 import random
 from queue import Queue
 import time
+
+import sys
+sys.path.append('../')
 from graph_functions import *
 
 inverse_indicies = None
 
-edgesFilename = '../../data/Counted'
+edgesFilename = '../../data/sampleEdges'
 
 class Nasz_algorytm:
+
+    @staticmethod
+    def read_graph(edgesFile):
+        g = Graph_Reader.read_graph(edgesFile)
+        g.vs["last_community_tried"] = 0
+        g.vs["last_community_added"] = 0
+        g.vs["still_in_graph"] = 1
+        g.vs["comm_close_id"] = 0
+        g.vs["comm_neighbors"] = 0
+        g.vs["to_delete"] = 0 # 0 - still in graph, 1 - about to delete (all members in community are deleted at one time), 2 - deleted
+
+        return g
 
     @staticmethod
     def vertex_should_join(g, vertex_idx, community_size):
@@ -59,7 +74,7 @@ class Nasz_algorytm:
 
         ratio = float(outside_neighbors) / (community_neighbors + outside_neighbors)
         #print('         ratio   ' + str(ratio) + '     ' + str(avg))
-        if ratio <= avg or ratio <= 0.5 :
+        if ratio <= avg or ratio < 0.5 :
             g.vs[vertex_idx]["to_delete"] = 1
             #print('     to delete')
             return True
@@ -104,8 +119,12 @@ class Nasz_algorytm:
         g.vs[vertex_idx]["still_in_graph"] = 0
 
     @staticmethod
-    def main(g, communities_by_c, communities_by_v):
+    def solve(g):
         
+        communities_by_v = [[] for _ in range(len(g.vs))] # lista ze społecznościami, do których należy vierzchołek
+        communities_by_c = [] # lista z wierzchołkami, które należą do danej społeczności
+        communities_by_c.append([])
+
         vertices_left_in_graph = len(g.vs)
         no_vertices = len(g.vs)
         current_community_number = 0
@@ -162,66 +181,4 @@ class Nasz_algorytm:
             #visual_style["vertex_size"] = g.vs["vertex_size"]
             #plot(g, **visual_style)
             #print(' vertices left in graph   ' + str(vertices_left_in_graph))
-'''
-g = read_graph(edgesFilename)
-gg = g.copy()
-
-vertices_left_in_graph = len(g.vs)
-no_vertices = len(g.vs)
-current_community_number = 0
-current_community_size = 0
-
-communities_by_v = [[] for _ in range(len(g.vs))] # lista ze społecznościami, do których należy vierzchołek
-communities_by_c = [] # lista z wierzchołkami, któ©e należą do danej społeczności
-communities_by_c.append([])
-
-print('executing algorithm')
-start = time.time()
-Nasz_algorytm.main(g, communities_by_c, communities_by_v)
-ex_time = time.time() - start
-
-
-#print("GRAPH VERTICES")
-#for i in range(len(g.vs)):
-#    print(str(i) + '  ' + g.vs[i]["id"])
-
-
-
-#plot(g, **visual_style)
-#while labeled_vertices < no_vertices:
-
-
-#print('communities')
-#print(*communities_by_c, sep="\n")
-
-for community in communities_by_c:
-    color = f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
-    for vert in community:
-        g.vs[vert]["vertex_color"] = color
-
-#for i in range(len(communities_by_v)):
-#    if len(communities_by_v[i]) > 1:
-#        g.vs[i]["vertex_color"] = 'rgb(0, 0, 0)'
-
-
-#for i in range(len(communities_by_c)):
-#    communities_by_c[i] = [g.vs[vert]["id"] for vert in communities_by_c[i]]
-
-#print('setting layout')
-visual_style = set_visual_style(g)
-#print('communities')
-#print(*communities_by_c, sep="\n")
-#print('\nvertices')
-#print(*communities_by_v, sep="\n")
-print('Execution time   ' + str(ex_time))
-print('no_vertices   ' + str(len(gg.vs)) + '    edges   ' + str(len(gg.es)))
-
-#with open(edgesFilename + 'Communities.csv', 'w') as csvfile:
-#    csvwriter = csv.writer(csvfile)
-#    csvwriter.writerows(communities_by_c)
-#    csvfile.close()
-
-if len(g.vs) > 150:
-    visual_style["bbox"] = (4000, 4000)
-plot(gg, **visual_style)
-'''
+        return communities_by_c

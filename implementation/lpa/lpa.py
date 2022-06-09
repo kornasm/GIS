@@ -5,7 +5,9 @@ import igraph as ig
 import csv
 import collections
 import random
-
+import sys
+sys.path.append("../")
+from graph_functions import *
 
 # read and create graph
 
@@ -19,82 +21,136 @@ playersFilename = "../../data/samplePlayers"
 edgesFilename = "../../data/sampleEdges"
 edgesFilename = "genedges"
 
-def delete_comments(csvfile):
-    for row in csvfile:
-        raw = row.split('#')[0].strip()
-        if raw:
-            yield raw
 
-def read_graph(players_file, edges_file):
-    print('reading from file')
-    players = []
-    edges = []
-    with open(players_file , 'r') as csvfile:
-        csvreader = csv.reader(delete_comments(csvfile), delimiter=',')
-        players = list(csvreader)
+class Lpa:
 
-    with open(edges_file , 'r') as csvfile:
-        csvreader = csv.reader(delete_comments(csvfile), delimiter=',')
-        edges = list(csvreader)
+    @staticmethod
+    def read_graph(edges_file):
+        g = Graph_Reader.read_graph(edges_file)
+        g.vs["lpalabel"] = list(zip(range(len(g.vs)), g.vs["vertex_color"]))
+        g.vs["newlpalabel"] = 0
+        g.vs["vertex_color"]
+        return g
+        print('reading from file')
+        players = []
+        edges = []
+        with open(players_file , 'r') as csvfile:
+            csvreader = csv.reader(delete_comments(csvfile), delimiter=',')
+            players = list(csvreader)
 
-    print('edges setup')
-    edgevertices = list([edge[0] for edge in edges] + [edge[1] for edge in edges])
+        with open(edges_file , 'r') as csvfile:
+            csvreader = csv.reader(delete_comments(csvfile), delimiter=',')
+            edges = list(csvreader)
 
-    print('edgevertices')
-    edgevertices = list(dict.fromkeys(edgevertices))
+        print('edges setup')
+        edgevertices = list([edge[0] for edge in edges] + [edge[1] for edge in edges])
 
-    print('vertices')
-    #vertices = list([player for player in players if player[0] in edgevertices])
+        print('edgevertices')
+        edgevertices = list(dict.fromkeys(edgevertices))
 
-    
-    print('inverse_indicies')
-    inverse_indicies = dict(zip(edgevertices, range(len(edgevertices))))
+        print('vertices')
+        #vertices = list([player for player in players if player[0] in edgevertices])
 
-    g = Graph()
 
-    g.add_vertices(len(edgevertices))
-    print('no vertices   ' + str(len(edgevertices)))
-    g.vs["id"] = [vertex for vertex in edgevertices]
-    g.vs["label"] = g.vs["id"]
-    g.vs["vertex_size"] = 8
-    g.vs["newlpalabel"] = 0
-    g.es["weight"] = 2
-    g.vs["vertex_color"] = 0
+        print('inverse_indicies')
+        inverse_indicies = dict(zip(edgevertices, range(len(edgevertices))))
 
-    for vert in g.vs:
-        vert["vertex_color"] = f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
-    g.vs["lpalabel"] = list(zip(range(len(edgevertices)), g.vs["vertex_color"]))
+        g = Graph()
 
-    print("adding edges")
-    try:
-        for edge in edges:
-            g.add_edge(inverse_indicies[edge[0]], inverse_indicies[edge[1]])
-    except:
-        print("Error occured during graph creating")
-        quit()
+        g.add_vertices(len(edgevertices))
+        print('no vertices   ' + str(len(edgevertices)))
+        g.vs["id"] = [vertex for vertex in edgevertices]
+        g.vs["label"] = g.vs["id"]
+        g.vs["vertex_size"] = 8
+        g.vs["newlpalabel"] = 0
+        g.vs["vertex_color"] = 0
 
-    g.es["weigth"] = 1
-    print("graph created")
-    return g
+        for vert in g.vs:
+            vert["vertex_color"] = f'rgb({random.randint(0, 255)}, {random.randint(0, 255)}, {random.randint(0, 255)})'
+        g.vs["lpalabel"] = list(zip(range(len(edgevertices)), g.vs["vertex_color"]))
 
-def create_dictionary(vertices):
-    dictionary = dict(zip(vertices, range(len(vertices))))
-    return dictionary
+        return g
 
-g = read_graph(playersFilename, edgesFilename)
+    @staticmethod
+    def solve(g):
+        changed = True
+        max_iter = 20
+        neigh_labels = [None] * len(g.vs)
+
+        #print("\n\nLPA\n")
+
+        iter = 0
+
+        g.vs["vertex_color"] = g.vs["lpalabel"][1]
+        g.vs["label"] = g.vs["lpalabel"]
+
+        while changed == True and iter < max_iter:
+            iter = iter + 1
+            a = 1
+            #print("loop")
+            changedthisiteration = False
+            for vert in g.vs:
+
+                neighbours = g.neighbors(vert)
+
+                if(len(neighbours) > 0):
+
+                    vertidx = vert.index
+                    neigh_labels[vertidx] = []
+
+                    for neigh in neighbours:
+                        neigh_labels[vertidx].append(g.vs[neigh]["lpalabel"])
+
+                    counted = Counter(neigh_labels[vertidx])
+                    newlabel = counted.most_common()
+
+                    #g.vs[vertidx]["vertex_size"] = 30
+                    if g.vs[vertidx]["lpalabel"] != newlabel[0][0]:
+
+                        g.vs[vertidx]["newlpalabel"] = newlabel[0][0]
+                        #g.vs[vertidx]["vertex_size"] = 60
+                        changedthisiteration = True
+
+            changed = changedthisiteration
+
+            g.vs["lpalabel"] = g.vs["newlpalabel"]
+            for vert in g.vs:
+                vertidx = vert.index
+                g.vs[vertidx]["vertex_color"] = g.vs[vertidx]["lpalabel"][1]
+                g.vs[vertidx]["label"] = (g.vs[vertidx]["id"], g.vs[vertidx]["lpalabel"][0])
+
+            #visual_style["vertex_size"] = g.vs["vertex_size"]
+            #visual_style["vertex_color"] = g.vs["vertex_color"]
+
+        # plotuje w lepszy sposób, ale słabo działa w przglądarce
+        #plot(g, **visual_style)
+        done_communities = []
+        communities_list = []
+        for i in range(len(g.vs)):
+            print(str(i) + '   ' + str(g.vs[i]["lpalabel"]))
+            community = g.vs[i]["lpalabel"]
+            if not community in done_communities:
+                done_communities.append(community)
+                communities_list.append([])
+                for j in range(i, len(g.vs)):
+                    if g.vs[j]["lpalabel"] == community:
+                        communities_list[-1].append(j)
+        
+        return communities_list
 
 # set properties
 #g.vs["id"] = [vertex for vertex in edgevertices]
-g.vs["label"] = g.vs["id"]
-g.vs["vertex_size"] = 8
+#   g.vs["label"] = g.vs["id"]
+#   g.vs["vertex_size"] = 8
 #g.vs["name"] = [vertex[1] for vertex in vertices]
 #g.vs["lpalabel"] = list(zip(g.vs["id"], range(len(edgevertices))))
-g.vs["newlpalabel"] = 0
+#   g.vs["newlpalabel"] = 0
 #g.es["weight"] = 2
 #g.vs["vertex_color"] = 0
 
 
-# set visual style
+# set visual styl
+'''
 visual_style = {}
 visual_style["vertex_size"] = g.vs["vertex_size"]
 #visual_style["layout"] = g.layout("kamada_kawai")
@@ -107,63 +163,4 @@ if len(g.vs) > 30:
     visual_style["bbox"] = (1000, 1000)
 else:
     visual_style["bbox"] = (800, 800)
-
-# execute algorithm
-
-changed = True
-max_iter = 20
-neigh_labels = [None] * len(g.vs)
-
-print("\n\nLPA\n")
-
-iter = 0
-
-g.vs["vertex_color"] = g.vs["lpalabel"][1]
-g.vs["label"] = g.vs["lpalabel"]
-plot(g, **visual_style)
-
-while changed == True and iter < max_iter:
-    iter = iter + 1
-    a = 1
-    print("loop")
-    changedthisiteration = False
-    for vert in g.vs:
-
-        neighbours = g.neighbors(vert)
-
-        if(len(neighbours) > 0):
-
-            vertidx = vert.index
-            neigh_labels[vertidx] = []
-
-            for neigh in neighbours:
-                neigh_labels[vertidx].append(g.vs[neigh]["lpalabel"])
-
-            counted = Counter(neigh_labels[vertidx])
-            newlabel = counted.most_common()
-
-            g.vs[vertidx]["vertex_size"] = 30
-            if g.vs[vertidx]["lpalabel"] != newlabel[0][0]:
-
-                g.vs[vertidx]["newlpalabel"] = newlabel[0][0]
-                g.vs[vertidx]["vertex_size"] = 60
-                changedthisiteration = True
-    
-    changed = changedthisiteration
-
-    g.vs["lpalabel"] = g.vs["newlpalabel"]
-    for vert in g.vs:
-        vertidx = vert.index
-        g.vs[vertidx]["vertex_color"] = g.vs[vertidx]["lpalabel"][1]
-        g.vs[vertidx]["label"] = (g.vs[vertidx]["id"], g.vs[vertidx]["lpalabel"][0])
-
-    visual_style["vertex_size"] = g.vs["vertex_size"]
-    visual_style["vertex_color"] = g.vs["vertex_color"]
-
-
-# plot
-if len(g.vs) > 150:
-    visual_style["bbox"] = (4000, 4000)
-
-# plotuje w lepszy sposób, ale słabo działa w przglądarce
-plot(g, **visual_style)
+'''
